@@ -5,7 +5,7 @@ import pandas as pd
 import os
 import logging
 import datetime
-from config.common_config import *
+
 
 app = Flask(__name__)
 fd_pred = LLMPredict()

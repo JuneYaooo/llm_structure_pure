@@ -1,0 +1,38 @@
+version: "2.3"
+services:
+  lmdeploy:
+    image: openmmlab/lmdeploy:v0.4.0
+    runtime: nvidia
+    restart: always
+    shm_size: 16g
+    volumes:
+      - /mnt/nas/rancher_data/mchatgpt_internal/weights/Meta-0914/quant_gemm:/tmp/models
+      # - /sys/class/net/eth0/address:/tmp/host_mac
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=1
+    ports:
+      - "25555:23333"
+    command: ["lmdeploy", "serve", "api_server", "/tmp/models", "--model-name=llama3", "--model-format=awq", "--server-port=23333", "--log-level=INFO", "--cap=completion", "--backend=turbomind", "--tp=1", "--session-len=8192", "--max-batch-size=8", "--quant-policy=8"]
+    logging:
+      driver: "json-file"
+      options:
+       max-file: "5"
+       max-size: "10m"
+
+  llm_structure_pure:
+    build: 
+      context: .
+    environment:
+      - LLMDEPLOY_URL=http://lmdeploy:23333/v1/completions
+    ports:
+      - "45000:46000"
+    command: python /code/infer_api.py
+    volumes:
+      - /data/home/hanrui/github/llm_structure_pure/config:/code/config
+    depends_on:
+      - lmdeploy
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"

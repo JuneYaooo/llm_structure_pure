@@ -1,10 +1,10 @@
 import os
 import re
 import pandas as pd
-from config.common_config import *
 import time
-from lmdeploy.serve.openai.api_client import APIClient
 import concurrent.futures
+import requests
+import json
 
 def process_single_choice(value, value_domain):
     return value if value in value_domain else "未提及"
@@ -19,12 +19,24 @@ class LLMPredict(object):
     """自动保存最新模型
     """
     def __init__(self):
-        self.api_client = APIClient(llmdeploy_url)
-        self.model_name = self.api_client.available_models[0]
+        pass
 
     def pred_res(self,Instruction,Input):
+        url = os.getenv("LLMDEPLOY_URL")
+        headers = {'Content-Type': 'application/json'}
         prompt = f"<|start_header_id|>user<|end_header_id|>\n\n{Instruction}\n\n{Input}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-        completion = list(self.api_client.completions_v1(model=self.model_name, prompt=prompt, temperature=temperature))[0]
+        data = {
+            "model": "llama3",
+            "prompt": prompt,
+            "max_tokens": 2048,
+            "temperature": 0,
+            "top_p": 0.9,
+            "stream": False,
+            "stop": ["<|end_header_id|>"]
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        completion = response.json()
         answer = completion['choices'][0]['text']
         token_num = completion['usage']['completion_tokens']
         return answer,token_num
