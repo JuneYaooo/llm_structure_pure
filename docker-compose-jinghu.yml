@@ -20,8 +20,9 @@ services:
        max-size: "10m"
 
   llm_structure_pure:
-    build: 
-      context: .
+    image: llm_structure_pure-llm_structure_pure:latest
+#    build:
+#      context: .
     environment:
       - LLMDEPLOY_URL=http://lmdeploy:23333/v1/completions
     ports:
